@@ -1,0 +1,388 @@
+---
+title: 'Case Study 2: How Can a Wellness Technology Company Play It Smart?'
+author: "Abdullahi Ali"
+date: "`Fitbit Dataset`"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Summary
+
+Bellabeat is a women's wellness brand with an ecosystem of products and services centered on women's health. In order to provide women better insight into how their bodies function and to empower them to make healthier decisions, the firm creates wearables and complementary devices that track biometric and lifestyle data.
+
+They provide a variety of smart gadgets that may record menstrual cycles and reproductive health as well as data on activity, sleep, stress, heart rate, cardiac coherence, and respiration rate.
+
+Bellabeat promises to calculate wellness and readiness scores, highlight self-care deficiencies, and recommend adjustments using the accompanying app.
+
+This case primarily focuses on analyzing data from a competing product (a Fitbit tracker, to see how it might help to open up new growth potential for the company.
+
+## 1. 0 Ask
+
+### 1. 1 Business Task Statment
+
+Analyze patterns and relationships in how consumers utilize non-Bellabeat smart devices to measure their daily activity, calorie expenditure, and sleep quality, with the goal of applying results to Bellabeat's product development and marketing strategy.
+
+### 1.2 Stakeholders
+
+-   Urška Sršen - Bellabeat cofounder and Chief Creative Officer
+-   Sando Mur - Bellabeat cofounder and key member of Bellabeat executive team
+-   Bellabeat Marketing Analytics team
+
+The analysis will help Bellabeat team to design more innovative and competitive smart wellness devices that meet the needs and preferences of their target market. The analysis will also help the Bellabeat Marketing Analytics team to create more effective and engaging campaigns that showcase the benefits and features of Bellabeat's products and app."
+
+### 1. 3 Product
+
+#### - Bellabeat app:
+
+In this instance, our attention will be on the Bellabeat app, which offers users health information on their exercise, sleep, stress, menstrual cycle, and mindfulness practices. Users may use this information to better understand their routines and choose healthy options. Their collection of smart wellness devices are connected to the Bellabeat app.
+
+## 2. 0 Prepare phase
+
+## 2. 1 Information about our Data
+
+-   FitBit Fitness Tracker Data was the source of the data used in our case study. The Fitabase Data 4.12.16--5.12.16 dataset is kept in Kaggle and made public by Mobius.
+
+-   Over the period of 03.12.2016 to 05.12.2016, participants in a distributed survey conducted through Amazon Mechanical Turk produced the datasets in question. The submission of personal tracker data, including minute-level output for heart rate, physical activity, and sleep tracking, was approved by 33 qualified Fitbit users. The variation in output is a reflection of individual monitoring habits and preferences as well as the utilization of various Fitbit tracker models.
+
+-   A total of 18 CSV documents are available for this study. Each paper represents a separate set of quantitative Fitbit data. As data is tracked by day and time, each user has a distinct ID and various rows (long data).
+
+I looked through the CSV tables in Google Sheets because the sample size was so small. I was able to confirm the characteristics, findings, and relationships between each table. Each table's sample size (users) was counted, and the analysis's 31-day duration was confirmed.
+
+### 2. 2 Data Limitation
+
+The following details about the users and their context are unknown:
+
+-   Age
+-   Gender-identity
+-   Location
+
+### 2. 3 Expected outcomes
+
+-   Higher Daily Activity is Associated with Calories Burned
+-   Increased sleep duration is correlated with higher calorie expenditure.
+
+### 2.4 Questions
+
+1.  How is the app's use assisting users in being healthier?
+
+2.  Is "More Sleep" related with a high calorie expenditure or a low calorie expenditure?
+
+## 3. 0 Process Data
+
+### 3. 1 Installing and loading packages
+
+```{r Installing  and loading packages }
+
+library(janitor)
+library(dplyr)
+library(skimr)
+library(ggplot2)
+install.packages("waffle")
+installed.packages("plotrix")
+library(waffle)
+
+```
+
+### 3. 2 import Data
+
+```{r Import data}
+dailyActivity_merged <- read.csv("~/Desktop/Case Study /dailyActivity_merged.csv")
+ View(dailyActivity_merged)
+ 
+ Sleep_Calories...Sheet1 <- read.csv("~/Desktop/Case Study /Sleep_Calories - Sheet1.csv")
+   View(Sleep_Calories...Sheet1)
+```
+
+### 3. 3 Dataset previews
+
+```{r Dataset}
+
+skim_without_charts(dailyActivity_merged)
+head(dailyActivity_merged)
+
+```
+
+```{r DataSet}
+# Sleep_Calories DataSet
+skim_without_charts(Sleep_Calories...Sheet1)
+head(Sleep_Calories...Sheet1)
+```
+
+### 3. 4 Data cleaning
+
+The datasets are processed to search for flaws and inconsistencies
+
+```{r data cleaningg}
+sum(duplicated(dailyActivity_merged))
+sum(duplicated(Sleep_Calories...Sheet1))
+
+ 
+Sleep_Calories <- Sleep_Calories...Sheet1 %>%
+  distinct() %>%
+  drop()
+ View(Sleep_Calories)
+```
+
+### 3. 5 Merging datasets
+
+I was able to combine dailyActivity_merged and daily_sleep using Google Sheet (VlookUP) by utilizing id and date as their primary keys to look for any correlations between the data. We will only use n=24 for correlation studies after combining the data.
+
+This procedure enabled me in producing a new dataset named Sleep_Calories that we would use for analysis.
+
+## 4. 0 Data Analysis
+
+### 4. 1 Observing the relationship between the level of calorie expenditure and the level of sleep
+
+we'll compute the user's daily averages for calories.
+
+```{r Level of Calories burnded per user}
+Calories_average <- dailyActivity_merged %>%
+  group_by(Id) %>%
+  summarise (mean_daily_calories = mean(Calories))
+
+head(Calories_average)
+```
+
+We will group users according to their daily calorie burn and divide them into the following categories:
+
+-   Sedentary - Less than 1600 calories per day
+-   Lightly active - Between 1600 - 2200 calories per day
+-   Fairly active - Between 2200 - 2999 calories per day
+-   Very active - More than 3000 calories per day
+
+According to the following article, classification has been made. <https://www.healthline.com/health/fitness-exercise/how-many-calories-do-i-burn-a-day>
+
+We will now group our n=33 users according to their calories average count.
+
+```{r grouping calories}
+user_type_calories <- Calories_average %>%
+  mutate(user_type = case_when(
+    mean_daily_calories < 1600 ~ "sedentary",
+    mean_daily_calories >= 1600 & mean_daily_calories < 2200~ "lightly active", 
+    mean_daily_calories >= 2200 & mean_daily_calories < 2999 ~ "fairly active", 
+    mean_daily_calories >= 3000 ~ "very active"
+  ))
+
+head(user_type_calories)
+
+```
+
+Leveraging the user type counts we can create a data frame with the percentage of each user type(The level of calorie burned per day) to visualize them.
+
+```{r User type percentage}
+user_type_percent_calories <- user_type_calories %>%
+  group_by(user_type) %>%
+  summarise(total = n()) %>%
+  mutate(totals = sum(total)) %>%
+  group_by(user_type) %>%
+  summarise(total_percent = total / totals) %>%
+  mutate(labels = scales::percent(total_percent))
+
+user_type_percent_calories$user_type <- factor(user_type_percent_calories$user_type , levels = c("very active", "fairly active", "lightly active", "sedentary"))
+
+head(user_type_percent_calories)
+```
+
+Calories expenditure vs sleep level
+
+```{r Calorie expenditure vs sleep level}
+Sleep_vs_calorie <- Sleep_Calories %>%
+  group_by(Id) %>%
+  summarise (mean_daily_sleep = mean(TotalMinutesAsleep), mean_daily_calorie = mean(Calories))
+
+head(Sleep_vs_calorie)
+
+```
+
+### 4. 2 Calculating the level of activty and sleep of the users per day
+
+we'll compute the user's daily averages for activity and sleep
+
+```{r activity and sleep calculations}
+activity_average <- dailyActivity_merged %>%
+  group_by(Id) %>%
+  summarise (mean_daily_steps = mean(TotalSteps))
+
+head(activity_average)
+```
+
+```{r sleep calculations}
+Sleep_average <- Sleep_Calories %>%
+  group_by(Id) %>%
+  summarise (mean_daily_sleep = mean(TotalMinutesAsleep))
+
+head(Sleep_average)
+```
+
+We will group users according to their daily sleep and divide them into the following categories:
+
+-   Needs Nap - Less than 5 hours sleep per night
+-   enough sleep - Between 6 - 7 sleep per night
+-   Well rested - More than 8 sleep per day
+
+```{r user typer in sleep dataset}
+
+user_type_2_sl <- Sleep_average %>%
+  mutate(hours_sleep = mean_daily_sleep / 60) %>%
+  mutate(user_type_2_sl = case_when(
+    mean_daily_sleep <= 340 ~ "needs Nap",
+    mean_daily_sleep >= 340 & mean_daily_sleep < 420 ~  "enough sleep", 
+    mean_daily_sleep >= 420 & mean_daily_sleep < 700 ~ "Well rested", 
+  ))
+
+head(user_type_2_sl)
+
+
+```
+
+Leveraging the user type counts we can create a data frame with the percentage of each user type to visualize them.
+
+```{r}
+user_type_sl_percent <- user_type_2_sl %>%
+  group_by(user_type_2_sl) %>%
+  summarise(total = n()) %>%
+  mutate(totals = sum(total)) %>%
+  group_by(user_type_2_sl) %>%
+  summarise(total_percent = total / totals) %>%
+  mutate(labels = scales::percent(total_percent))
+
+user_type_sl_percent$user_type_2_sl<- factor(user_type_sl_percent$user_type_2_sl , levels = c("Well rested", "enough sleep", "needs Nap"))
+
+
+head(user_type_sl_percent)
+```
+
+### 4. 4 Summary of the analysis
+
+The goal of the analysis was to answer the following questions;
+
+1.  How is the app's use assisting users in being healthier?
+
+2.  Is "More Sleep" related with a high calorie expenditure or a low calorie expenditure?
+
+#### Analytical procedure
+
+Following are the procedures we performed throughout our study to obtain pertinent information that can aid the Bellabeat marketing team in creating a marketing strategy.
+
+A. First, we'll compute the user's daily averages for calories expenditure, also We divided users into the following categories based on their daily calorie burn:
+
+-   Sedentary - Less than 1600 calories per day
+-   Lightly active - Between 1600 - 2200 calories per day
+-   Fairly active - Between 2200 - 2999 calories per day
+-   Very active - More than 3000 calories per day
+
+For furthermore analysis, we used the user type counts, so we can generate a data frame that displays the percentage of each user type (in the amount of calories burnt daily data set), We also observed the relationship between the level of sleep and daily calories expenditure.
+
+C. Similarly, We assessed the users' daily averages for sleep and physical activity to look for patterns that may help us provide daily/weekly health updates to the customers.
+
+D. At the end of the analysis we add statistics calculations to help us get more insight form the datasets
+
+### 5. 0 Visualization
+
+### 5. 1 Categorizing users according to their sleeping time.
+
+```{r visualization using ggplot2}
+View(user_type_2_sl)
+user_type_2_sl %>%
+  
+  ggplot(data = user_type_2_sl, mapping = aes(x = mean_daily_sleep, y = user_type_2_sl,
+                                             size = mean_daily_sleep, color = user_type_2_sl)) +
+  geom_point() +
+  theme_bw() +
+  labs(x = "Mean daily sleep (Minuts)", y = "Sleep Category",
+       color = "daily sleep mintes", size = "sleep hours") +
+  
+  ggtitle("Categorizing users according to their sleeping time")
+```
+
+### 5. 2 Users sleep behavior
+
+```{r}
+user_data <- data.frame(
+  user_type_2_sl = c(1, 2, 3),
+  total_percent = c(0.25, 0.2916667, 0.4583333),
+  labels = c("needs Nap", "enough sleep", "Well rested")
+)
+ggplot(user_data, aes(x = "", y = total_percent, fill = labels)) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Users sleep behavior") +
+  theme_minimal() +
+  theme(axis.text = element_blank()) + 
+            geom_text(aes(label = paste0(round(total_percent * 100), "%")), position = position_stack(vjust = 0.5)) +
+  scale_fill_brewer(palette = "Set2")
+```
+
+### 5. 3 Categorizing the users according to the level of calories expenditure
+
+```{r Sleep vs Calories}
+user_type_calories %>% 
+ ggplot(data = user_type_calories, mapping = aes(x = user_type, y = mean_daily_calories, color = user_type)) + 
+ geom_point() + 
+ labs(title = "Categorizing the users according to the level of calories expenditure", 
+      subtitle = "Based on user type and average of the daily calories burned",
+      x = "User type", 
+      y = "average daily calories burned",
+      caption = "Source: user_type_calories dataset",
+      tag = "A") +
+  geom_smooth(method = "lm", formula = y ~ x, color = "red", size = 10, linetype = "dashed")
+```
+
+### 5. 4 Percentage of calories burnt by users
+
+```{r}
+user_type_percent_calories %>%
+  ggplot(data = user_type_percent_calories, mapping = aes(x = user_type, y = labels)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "User Type", y = "Total Percent", title = "Percentage of calories burnt by users")
+```
+
+### 5. 5 Histogram of mean daily calories burned per user
+
+```{r calories burned per user}
+Calories_average %>%
+ggplot(data = Calories_average, mapping = aes(x = mean_daily_calories)) +
+  geom_histogram(binwidth = 100, color = "black", fill = "blue") +
+  labs(title = "Histogram of mean daily calories burned per user", x = "Mean daily calories", y = "Frequency")
+```
+
+### 5. 6 The correlation between activity and the amount of calories that users burn
+
+```{r}
+dailyActivity_merged %>% 
+  ggplot(data = dailyActivity_merged, mapping = aes(x = TotalSteps, y = Calories, color = TotalDistance,)) +
+  geom_point() +
+  labs(title = "Calories vs. Total Steps", x = "Total Steps", y = "Calories", color = "Total Distance") +
+  theme_minimal()
+  
+```
+
+### 5. 7 A brief summary of the virtualization
+
+During the visualization, we showcased the following data to support the Bellabeat team in visualizing the consumers' behaviors.
+
+A. We sorted the users into groups depending on how much they sleep and how many calories they burn, then visualized it to gather insights into how many people are using the app and how much is keeping them healthier.
+
+B. We displayed the users' sleep patterns as well as the correlation between activity level and calories burnt.
+
+## 6. 0 Recommendations and insights
+
+### 6. 1 insights
+
+* 25% of users get less sleep than the CDC recommends, and 12% do not burn enough calories. 
+*  45% of users were classified as mildly active, which indicates they burned only between 1600 and 2200 calories per day. 
+*  49% of users sleep well, whereas 12% are extremely active.
+
+
+### 6. 2 Recommendations
+
+* Those who are less active and sleep less should be reminded and given tips on how to improve their sleep and exercise levels. 
+
+* Add a notification feature to the app to assist users know when to sleep and when to exercise. 
+
+* Add a function in the app that allows consumers to set goals, and if they meet those goals, they should be rewarded with discounts and other perks, but not to the point where the company's financial health is compromised.
