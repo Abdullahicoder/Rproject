@@ -1,6 +1,6 @@
 ---
 title: 'Case Study 2: How Can a Wellness Technology Company Play It Smart?'
-author: "Abdullahi Ali"
+author: "Abdullahi Hassan"
 date: "`Fitbit Dataset`"
 output:
   html_document: default
