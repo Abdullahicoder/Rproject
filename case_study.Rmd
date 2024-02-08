@@ -39,7 +39,7 @@ The analysis will help Bellabeat team to design more innovative and competitive 
 
 #### - Bellabeat app:
 
-In this instance, our attention will be on the Bellabeat app, which offers users health information on their exercise, sleep, stress, menstrual cycle, and mindfulness practices. Users may use this information to better understand their routines and choose healthy options. Their collection of smart wellness devices are connected to the Bellabeat app.
+In this instance, we will focus on the Fitbit dataset to uncover patterns and relationships in how consumers utilize non-Bellabeat smart devices to measure their daily activity, calorie expenditure, and sleep quality. By gaining insights from this analysis, Bellabeat can enhance its product development and marketing strategy to better cater to the needs and preferences of its target market.
 
 ## 2. 0 Prepare phase
 
